@@ -11,10 +11,11 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
+    const name = (e.target as any)[0].value;
+    const email = (e.target as any)[1].value;
+    const phone = (e.target as any)[2].value;
+    const password = (e.target as any)[3].value;
+    console.log("Sending to Backend:", { name, email, phone, password });
     try {
         // FastAPI OAuth2 ต้องการข้อมูลแบบ x-www-form-urlencoded
         const body = new URLSearchParams();
@@ -23,9 +24,13 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
         const response = await fetch("http://localhost:8000/auth/register", {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: body,
-        });
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: email,      // ต้องตรงกับ RegisterBody.email ใน Python
+                password: password, // ต้องตรงกับ RegisterBody.password ใน Python
+                name: name
+            }),
+            });
 
         const data = await response.json();
 

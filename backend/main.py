@@ -158,7 +158,7 @@ def fetch_bars(n: int = 350) -> pd.DataFrame:
 
 def run_predict(df: pd.DataFrame, models: dict) -> dict:
     """import จาก run_pipeline_v2 — ต้องอยู่ใน path เดียวกัน"""
-    from run_pipeline_v2 import predict, FEATURE_COLS
+    from backend.run_pipeline_v2 import predict, FEATURE_COLS
     signal, conf, proba, ctx = predict(models, df)
     return {
         "type": "signal",
@@ -227,43 +227,53 @@ async def startup():
 #  AUTH ROUTES
 # ══════════════════════════════════════════════════════════════════════════════
 
+# --- ในส่วน Register ---
 @app.post("/auth/register", tags=["auth"])
 async def register(body: RegisterBody):
-    if not supabase:
-        # Dev mode: คืน mock token
-        token = create_token({"sub": "dev-user-001", "role": "user"})
-        return TokenOut(access_token=token, role="user")
-
+    print(f"DEBUG REGISTER: email={body.email}, password={body.password}")
     try:
-        res = supabase.auth.sign_up({"email": body.email, "password": body.password})
-        uid = res.user.id
-        supabase.table("profiles").insert({
-            "id": uid, "email": body.email,
-            "name": body.name, "role": "user",
-        }).execute()
-        token = create_token({"sub": uid, "role": "user"})
+        # ✅ ต้องเป็น body.password เฉยๆ แบบนี้เลย
+        res = supabase.auth.sign_up({
+            "email": body.email, 
+            "password": body.password 
+        })
+        
+        if not res.user:
+            raise HTTPException(400, detail="สมัครสมาชิกไม่สำเร็จ")
+            
+        token = create_token({"sub": res.user.id, "role": "user"})
         return TokenOut(access_token=token, role="user")
     except Exception as e:
+        print(f"Register Error: {e}")
         raise HTTPException(400, detail=str(e))
 
-
-@app.post("/auth/login", tags=["auth"])
+# --- ในส่วน Login ---
+@app.post("/auth/login")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
-    if not supabase:
-        # Dev mode
-        token = create_token({"sub": "dev-user-001", "role": "user"})
-        return TokenOut(access_token=token, role="user")
-
     try:
-        res  = supabase.auth.sign_in_with_password({"email": form.username, "password": form.password})
-        uid  = res.user.id
-        prof = supabase.table("profiles").select("role").eq("id", uid).single().execute()
-        role = prof.data.get("role", "user")
-        token = create_token({"sub": uid, "role": role})
-        return TokenOut(access_token=token, role=role)
-    except Exception:
-        raise HTTPException(status_code=401, detail="อีเมล/รหัสผ่านไม่ถูกต้อง")
+        res = supabase.auth.sign_in_with_password({
+            "email": form.username, 
+            "password": form.password
+        })
+        
+        uid = res.user.id
+        prof = supabase.table("profiles").select("role").eq("id", uid).maybe_single().execute()
+        role = prof.data.get("role", "user") if prof.data else "user"
 
+        # ✅ จุดที่ต้องแก้: ตรวจสอบว่าชื่อฟังก์ชันสร้าง token ตรงกับที่คุณเขียนไว้ไหม
+        # โดยปกติคุณน่าจะตั้งชื่อว่า create_access_token หรือ create_token
+        access_token = create_token({"sub": uid, "role": role}) 
+
+        # ✅ และต้อง return ตัวแปรชื่อเดียวกันออกไป
+        return {
+            "access_token": access_token, 
+            "token_type": "bearer", 
+            "role": role
+        }
+        
+    except Exception as e:
+        print(f"Login Logic Error: {e}") # ดู Error ที่บรรทัดนี้ใน Terminal
+        raise HTTPException(status_code=401, detail=str(e))
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  SIGNAL ROUTES

@@ -5,55 +5,60 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // ดึงข้อมูลจาก Form
+    // ใช้ FormData ดึงค่าจาก input ที่มี attribute 'name'
     const formData = new FormData(e.currentTarget);
-    const name = formData.get("name");
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // Debug เช็คที่หน้า Console ของ Browser (F12)
+    console.log("Login Attempt:", { email });
 
     try {
-        const response = await fetch("http://localhost:8000/auth/register", {
+      // FastAPI OAuth2 ต้องการข้อมูลแบบ x-www-form-urlencoded
+      const body = new URLSearchParams();
+      body.append("username", email); // ส่ง email ใน key 'username' ตามมาตรฐาน OAuth2
+      body.append("password", password);
+
+      const response = await fetch("http://localhost:8000/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            email: email,
-            password: password,
-            name: name,
-        }),
-        });
+        headers: { 
+          "Content-Type": "application/x-www-form-urlencoded" 
+        },
+        body: body,
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (response.ok) {
-        // สมัครเสร็จ เก็บ Token และแสดงหน้า Success
+      if (response.ok) {
+        // เก็บ Token และ Role ลง LocalStorage
         localStorage.setItem("token", data.access_token);
-        localStorage.setItem("role", data.role);
-        setIsSuccess(true);
-        } else {
-        // จัดการ Error เช่น "Email already exists"
-        alert(data.detail || "เกิดข้อผิดพลาดในการสมัครสมาชิก");
-        }
-    } catch (error) {
-        alert("ไม่สามารถติดต่อ Server ได้ โปรดตรวจสอบว่า Backend รันอยู่");
+        localStorage.setItem("role", data.role || "user");
+        
+        // ส่งไปหน้า Dashboard
+        window.location.href = "/dashboard";
+      } else {
+        // ถ้า Backend ส่ง error detail มาให้โชว์ตามนั้น
+        alert(data.detail || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
+      alert("ไม่สามารถเชื่อมต่อกับ Server ได้ กรุณาตรวจสอบว่า Backend รันอยู่");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-    };
+  };
 
   return (
     <div className="login-container">
-      {/* Background Decor */}
       <div className="bg-glow" />
       
       <div className="auth-card">
-        {/* Back to Home */}
         <Link href="/" className="back-link">
           <ArrowLeft size={16} />
           กลับหน้าหลัก
@@ -67,10 +72,12 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
-            <label>อีเมล</label>
+            <label htmlFor="email">อีเมล</label>
             <div className="input-wrapper">
               <Mail className="input-icon" size={18} />
               <input 
+                id="email"
+                name="email" // ✅ สำคัญมาก: ต้องมี name เพื่อให้ FormData ดึงค่าได้
                 type="email" 
                 placeholder="email@example.com" 
                 required 
@@ -80,12 +87,14 @@ export default function LoginPage() {
 
           <div className="input-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label>รหัสผ่าน</label>
+              <label htmlFor="password">รหัสผ่าน</label>
               <Link href="/auth/forgot" className="forgot-link">ลืมรหัสผ่าน?</Link>
             </div>
             <div className="input-wrapper">
               <Lock className="input-icon" size={18} />
               <input 
+                id="password"
+                name="password" // ✅ สำคัญมาก: ต้องมี name เพื่อให้ FormData ดึงค่าได้
                 type={showPassword ? "text" : "password"} 
                 placeholder="••••••••" 
                 required 
@@ -122,7 +131,6 @@ export default function LoginPage() {
           position: relative;
           overflow: hidden;
         }
-
         .bg-glow {
           position: absolute;
           width: 400px;
@@ -133,7 +141,6 @@ export default function LoginPage() {
           transform: translate(-50%, -50%);
           pointer-events: none;
         }
-
         .auth-card {
           width: 100%;
           max-width: 420px;
@@ -146,7 +153,6 @@ export default function LoginPage() {
           z-index: 1;
           box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-
         .back-link {
           display: flex;
           align-items: center;
@@ -158,9 +164,7 @@ export default function LoginPage() {
           transition: color 0.2s;
         }
         .back-link:hover { color: #c9a84c; }
-
         .auth-header { text-align: center; margin-bottom: 32px; }
-        
         .logo-box {
           width: 48px;
           height: 48px;
@@ -174,33 +178,17 @@ export default function LoginPage() {
           color: #0a0a0a;
           font-size: 18px;
         }
-
         h1 {
-          font-family: 'DM Serif Display', serif;
           font-size: 28px;
           color: #e8e0cc;
           margin-bottom: 8px;
         }
-
         p { color: #6a6050; font-size: 15px; }
-
         .auth-form { display: flex; flex-direction: column; gap: 20px; }
-
         .input-group { display: flex; flex-direction: column; gap: 8px; }
         .input-group label { font-size: 14px; color: #8a8070; }
-
-        .input-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-
-        .input-icon {
-          position: absolute;
-          left: 14px;
-          color: #3a3520;
-        }
-
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-icon { position: absolute; left: 14px; color: #3a3520; }
         input {
           width: 100%;
           background: #0f0e0a;
@@ -211,14 +199,12 @@ export default function LoginPage() {
           font-size: 15px;
           transition: all 0.2s;
         }
-
         input:focus {
           outline: none;
           border-color: #c9a84c;
           background: #15140f;
           box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.1);
         }
-
         .toggle-password {
           position: absolute;
           right: 12px;
@@ -227,11 +213,7 @@ export default function LoginPage() {
           color: #3a3520;
           cursor: pointer;
         }
-        .toggle-password:hover { color: #8a7040; }
-
         .forgot-link { font-size: 12px; color: #8a7040; text-decoration: none; }
-        .forgot-link:hover { color: #c9a84c; }
-
         .submit-btn {
           margin-top: 10px;
           padding: 14px;
@@ -247,31 +229,12 @@ export default function LoginPage() {
           justify-content: center;
           align-items: center;
         }
-
         .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .submit-btn:active { transform: translateY(0); }
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        .auth-footer {
-          margin-top: 24px;
-          text-align: center;
-          font-size: 14px;
-          color: #5a5240;
-        }
-
-        .auth-footer a {
-          color: #c9a84c;
-          text-decoration: none;
-          font-weight: 600;
-        }
-
+        .auth-footer { margin-top: 24px; text-align: center; font-size: 14px; color: #5a5240; }
+        .auth-footer a { color: #c9a84c; text-decoration: none; font-weight: 600; }
         .spinner { animation: rotate 1s linear infinite; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        @media (max-width: 480px) {
-          .auth-card { padding: 32px 24px; border: none; background: transparent; box-shadow: none; }
-          .bg-glow { width: 300px; height: 300px; }
-        }
       `}</style>
     </div>
   )
