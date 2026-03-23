@@ -5,14 +5,47 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    // Simulate API Call
-    setTimeout(() => setIsLoading(false), 2000)
-  }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // ดึงข้อมูลจาก Form
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name");
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    try {
+        const response = await fetch("http://localhost:8000/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email: email,
+            password: password,
+            name: name,
+        }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+        // สมัครเสร็จ เก็บ Token และแสดงหน้า Success
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("role", data.role);
+        setIsSuccess(true);
+        } else {
+        // จัดการ Error เช่น "Email already exists"
+        alert(data.detail || "เกิดข้อผิดพลาดในการสมัครสมาชิก");
+        }
+    } catch (error) {
+        alert("ไม่สามารถติดต่อ Server ได้ โปรดตรวจสอบว่า Backend รันอยู่");
+    } finally {
+        setIsLoading(false);
+    }
+    };
 
   return (
     <div className="login-container">

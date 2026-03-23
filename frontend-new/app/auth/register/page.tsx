@@ -6,16 +6,45 @@ import { ArrowLeft, Mail, Lock, User, Phone, ShieldCheck, Loader2, CheckCircle2 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    // สมมติว่าส่ง API ไปสมัครสมาชิก
-    setTimeout(() => {
-      setIsLoading(false)
-      setIsSuccess(true)
-    }, 2000)
-  }
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    try {
+        // FastAPI OAuth2 ต้องการข้อมูลแบบ x-www-form-urlencoded
+        const body = new URLSearchParams();
+        body.append("username", email); // Backend ใช้ username แทน email ใน OAuth2 standard
+        body.append("password", password);
+
+        const response = await fetch("http://localhost:8000/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: body,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+        // เก็บ Token ลง localStorage เพื่อใช้ในหน้า Dashboard
+            localStorage.setItem("token", data.access_token);
+            localStorage.setItem("role", data.role);
+        
+        // ส่งไปหน้า Dashboard
+            window.location.href = "/dashboard";
+        } else {
+            alert(data.detail || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        }
+    } catch (error) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    } finally {
+        setIsLoading(false);
+    }
+};
 
   if (isSuccess) {
     return (
