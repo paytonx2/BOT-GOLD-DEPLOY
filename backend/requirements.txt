@@ -1,0 +1,26 @@
+# Web Framework & API
+fastapi
+uvicorn
+pydantic[email]
+python-multipart
+
+# Security & Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Database & External Services
+supabase
+python-dotenv
+requests
+
+# Data Science & Machine Learning
+numpy
+pandas
+scikit-learn
+joblib
+lightgbm
+xgboost
+optuna
+
+# Scheduling & Utils
+APScheduler
