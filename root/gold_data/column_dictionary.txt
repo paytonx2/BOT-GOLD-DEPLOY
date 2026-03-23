@@ -1,0 +1,56 @@
+Column Dictionary — Gold XAU/USD Pipeline
+==================================================
+
+datetime                       : วันที่/เวลา
+open                           : ราคาเปิด (USD/oz)
+high                           : ราคาสูงสุด (USD/oz)
+low                            : ราคาต่ำสุด (USD/oz)
+close                          : ราคาปิด (USD/oz)
+volume                         : ปริมาณซื้อขาย
+price_change                   : การเปลี่ยนแปลงราคา
+pct_change                     : % การเปลี่ยนแปลง
+log_return                     : Log Return
+daily_range                    : ช่วง High-Low รายวัน
+daily_range_pct                : ช่วง H-L เป็น %
+sma_5                          : Simple Moving Average N วัน
+ema_5                          : Exponential Moving Average N วัน
+sma_10                         : Simple Moving Average N วัน
+ema_10                         : Exponential Moving Average N วัน
+sma_20                         : Simple Moving Average N วัน
+ema_20                         : Exponential Moving Average N วัน
+sma_50                         : Simple Moving Average N วัน
+ema_50                         : Exponential Moving Average N วัน
+sma_100                        : Simple Moving Average N วัน
+ema_100                        : Exponential Moving Average N วัน
+sma_200                        : Simple Moving Average N วัน
+ema_200                        : Exponential Moving Average N วัน
+rsi_14                         : RSI 14 วัน (overbought>70, oversold<30)
+rsi_7                          : RSI 7 วัน (short-term)
+macd                           : MACD Line (EMA12 - EMA26)
+macd_signal                    : MACD Signal Line (EMA9 of MACD)
+macd_hist                      : MACD Histogram
+atr_14                         : Average True Range 14 วัน (ความผันผวน)
+atr_pct                        : ATR เป็น % ของราคา
+bb_upper                       : Bollinger Band บน (SMA20 + 2σ)
+bb_mid                         : Bollinger Band กลาง (SMA20)
+bb_lower                       : Bollinger Band ล่าง (SMA20 - 2σ)
+bb_width                       : ความกว้าง Bollinger Band (%)
+bb_pct                         : ตำแหน่งราคาใน Bollinger Band (0-1)
+vwap_20                        : VWAP 20 วัน
+adx_14                         : ADX 14 วัน (strength: >25=strong trend)
+di_plus                        : +DI (แนวโน้มขาขึ้น)
+di_minus                       : -DI (แนวโน้มขาลง)
+pivot                          : Classic Pivot Point
+r1                             : —
+s1                             : —
+r2                             : —
+s2                             : —
+day_of_week                    : —
+month                          : —
+quarter                        : —
+year                           : —
+is_month_end                   : —
+golden_cross                   : EMA50 ตัด EMA200 ขึ้น (1=เกิด)
+death_cross                    : EMA50 ตัด EMA200 ลง (1=เกิด)
+target_next1d                  : ราคาปิดวันถัดไป (สำหรับ ML)
+target_dir                     : ทิศทางราคาวันถัดไป (1=ขึ้น, 0=ลง)
